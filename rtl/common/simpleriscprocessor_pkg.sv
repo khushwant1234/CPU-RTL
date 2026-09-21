@@ -77,6 +77,15 @@ package simpleriscprocessor_pkg;
   // and alu_op_e's 0-value is ALU_ADD by declaration order above -- flush
   // logic should explicitly force alu_op to ALU_NOP, see if_id_reg/id_ex_reg.)
 
+  // ---------------------------------------------------------------------
+  // Forwarding mux select (forwarding_unit -> EX operand muxes)
+  // ---------------------------------------------------------------------
+  typedef enum logic [1:0] {
+    FWD_NONE   = 2'b00,   // use the value read from the register file in ID
+    FWD_EX_MEM = 2'b01,   // result of the instruction one ahead (in MEM)
+    FWD_MEM_WB = 2'b10    // result of the instruction two ahead (in WB)
+  } fwd_sel_e;
+
   // Ready-made bubble constant (all fields 0, alu_op = ALU_NOP). alu_op is the
   // last field in the struct so it sits in the low bits.
   localparam ctrl_t CTRL_BUBBLE =
