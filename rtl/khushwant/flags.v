@@ -1,5 +1,5 @@
 //=============================================================================
-// flags.sv
+// flags.v
 // E / GT flags register written by cmp in the EX stage.
 //   flag_e  = (a == b)
 //   flag_gt = (a >  b)   signed compare, SimpleRisc numbers are 2's complement
@@ -9,16 +9,16 @@
 // extra forwarding needed for the flags.
 //=============================================================================
 module flags (
-  input  logic        clk,
-  input  logic        rst_n,
-  input  logic        write_en,   // ctrl.flags_write_en of the instr in EX
-  input  logic [31:0] a,
-  input  logic [31:0] b,
-  output logic        flag_e,
-  output logic        flag_gt
+  input  wire        clk,
+  input  wire        rst_n,
+  input  wire        write_en,   // ctrl[C_FLAGS_WRITE] of the instr in EX
+  input  wire [31:0] a,
+  input  wire [31:0] b,
+  output reg         flag_e,
+  output reg         flag_gt
 );
 
-  always_ff @(posedge clk or negedge rst_n) begin
+  always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       flag_e  <= 1'b0;
       flag_gt <= 1'b0;
@@ -28,4 +28,4 @@ module flags (
     end
   end
 
-endmodule : flags
+endmodule
