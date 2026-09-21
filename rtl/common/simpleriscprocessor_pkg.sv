@@ -76,4 +76,9 @@ package simpleriscprocessor_pkg;
   // and alu_op_e's 0-value is ALU_ADD by declaration order above -- flush
   // logic should explicitly force alu_op to ALU_NOP, see if_id_reg/id_ex_reg.)
 
+  // Ready-made bubble constant (all fields 0, alu_op = ALU_NOP). alu_op is the
+  // last field in the struct so it sits in the low bits.
+  localparam ctrl_t CTRL_BUBBLE =
+    ctrl_t'({{($bits(ctrl_t) - $bits(alu_op_e)){1'b0}}, ALU_NOP});
+
 endpackage : simpleriscprocessor_pkg

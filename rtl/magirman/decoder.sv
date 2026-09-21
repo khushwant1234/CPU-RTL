@@ -110,7 +110,8 @@ module decoder
         ctrl.rs1_valid     = 1'b0;
         ctrl.rs2_valid     = ~i_bit;
         ctrl.alu_src_imm   = i_bit;
-        ctrl.alu_op        = (opcode == OP_NOT) ? ALU_NOT : ALU_MOV;
+        if (opcode == OP_NOT) ctrl.alu_op = ALU_NOT;
+        else                  ctrl.alu_op = ALU_MOV;
       end
 
       // ---- ld: rd <- MEM[rs1 + imm] --------------------------------------

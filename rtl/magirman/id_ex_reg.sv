@@ -40,17 +40,12 @@ module id_ex_reg
   output ctrl_t         ctrl_out
 );
 
-  // Bubble value built once, combinationally, so the flush branch below is
-  // a single clean nonblocking assignment (avoid double-driving ctrl_out
-  // with two nonblocking assignments to the same struct in one edge).
-  ctrl_t bubble_ctrl;
-  always_comb begin
-    bubble_ctrl        = '0;
-    bubble_ctrl.alu_op = ALU_NOP;   // force true NOP, not ALU_ADD (its 0-value)
-  end
-
+  // Flush (taken branch / load-use bubble) is synchronous, so it is kept out
+  // of the async reset branch -- mixing them in one "if" does not map to a
+  // clean flop with async reset. Both load CTRL_BUBBLE from the package (a
+  // constant, so there is no time-0 race like with an always_comb value).
   always_ff @(posedge clk or negedge rst_n) begin
-    if (!rst_n || flush) begin
+    if (!rst_n) begin
       pc_out            <= 32'b0;
       rs1_data_out       <= 32'b0;
       rs2_data_out       <= 32'b0;
@@ -59,7 +54,17 @@ module id_ex_reg
       rd_addr_out        <= 4'b0;
       rs1_addr_out       <= 4'b0;
       rs2_addr_out       <= 4'b0;
-      ctrl_out           <= bubble_ctrl;
+      ctrl_out           <= CTRL_BUBBLE;
+    end else if (flush) begin
+      pc_out            <= 32'b0;
+      rs1_data_out       <= 32'b0;
+      rs2_data_out       <= 32'b0;
+      imm_ext_out        <= 32'b0;
+      branch_offset_out  <= 27'b0;
+      rd_addr_out        <= 4'b0;
+      rs1_addr_out       <= 4'b0;
+      rs2_addr_out       <= 4'b0;
+      ctrl_out           <= CTRL_BUBBLE;
     end else if (!stall) begin
       pc_out            <= pc_in;
       rs1_data_out       <= rs1_data_in;
