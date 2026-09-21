@@ -5,7 +5,7 @@
 # plain Verilog (no SystemVerilog).
 #
 #   ./run_tests.sh              run everything
-#   ./run_tests.sh magirman     only testbenches whose path contains "magirman"
+#   ./run_tests.sh magizhnan     only testbenches whose path contains "magizhnan"
 #   ./run_tests.sh tb_alu -v    verbose: show the full simulator output
 #
 set -u
@@ -26,11 +26,11 @@ done
 rm -rf tools/__pycache__
 
 # all RTL (plain Verilog, shared defines come from rtl/common/defines.vh)
-RTL=($(ls rtl/magirman/*.v rtl/khushwant/*.v rtl/shared/*.v 2>/dev/null))
+RTL=($(ls rtl/magizhnan/*.v rtl/khushwant/*.v rtl/shared/*.v 2>/dev/null))
 
 pass=0; fail=0; failed=()
 
-for tb in $(ls tb/magirman/tb_*.v tb/khushwant/tb_*.v tb/shared/tb_*.v 2>/dev/null); do
+for tb in $(ls tb/magizhnan/tb_*.v tb/khushwant/tb_*.v tb/shared/tb_*.v 2>/dev/null); do
   [[ -n "$FILTER" && "$tb" != *"$FILTER"* ]] && continue
   top=$(basename "$tb" .v)
   out="$BUILD/$top.vvp"

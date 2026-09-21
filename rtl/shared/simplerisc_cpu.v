@@ -2,8 +2,8 @@
 // simplerisc_cpu.v
 // Top level of the 5-stage pipelined SimpleRisc processor.
 //
-//   IF  : pc_reg, instr_mem                          (Magirman)
-//   OF  : if_id_reg, decoder, reg_file, id_ex_reg    (Magirman)
+//   IF  : pc_reg, instr_mem                          (Magizhnan)
+//   OF  : if_id_reg, decoder, reg_file, id_ex_reg    (Magizhnan)
 //   EX  : execute_stage (alu, flags, branch_unit)    (Khushwant)
 //   MA  : ex_mem_reg, memory_unit, data_mem          (Khushwant / shared)
 //   RW  : mem_wb_reg, writeback                      (Khushwant)

@@ -16,17 +16,17 @@ Hazards handled:
 
 | Part | Who | Files |
 |---|---|---|
-| Fetch + decode (IF, OF) | Magirman | `rtl/magirman/` pc_reg, instr_mem, if_id_reg, decoder, reg_file, id_ex_reg |
+| Fetch + decode (IF, OF) | Magizhnan | `rtl/magizhnan/` pc_reg, instr_mem, if_id_reg, decoder, reg_file, id_ex_reg |
 | Execute, memory, write-back (EX, MA, RW) | Khushwant | `rtl/khushwant/` alu, flags, branch_unit, execute_stage, ex_mem_reg, memory_unit, mem_wb_reg, writeback |
 | Shared | both | `rtl/common/defines.vh`, `rtl/shared/` forwarding_unit, hazard_unit, data_mem, simplerisc_cpu (top) |
 
-Tests follow the same layout under `tb/magirman`, `tb/khushwant` and `tb/shared`.
+Tests follow the same layout under `tb/magizhnan`, `tb/khushwant` and `tb/shared`.
 
 ## Layout
 
 ```
 rtl/common/     defines.vh    opcodes, ALU ops, ctrl bit positions, CTRL_BUBBLE, FWD_*
-rtl/magirman/   IF + OF stage modules
+rtl/magizhnan/   IF + OF stage modules
 rtl/khushwant/  EX + MA + RW stage modules
 rtl/shared/     forwarding_unit, hazard_unit, data_mem, simplerisc_cpu (top level)
 tb/common/      tb_check.vh (CHECK_EQ macros), tb_encode.vh (instruction encoders)
@@ -43,7 +43,7 @@ compiled with `iverilog -g2005`, so any SystemVerilog syntax is rejected.
 
 ```bash
 ./run_tests.sh              # everything
-./run_tests.sh magirman     # only Magirman's unit tests
+./run_tests.sh magizhnan     # only Magizhnan's unit tests
 ./run_tests.sh tb_cpu -v    # one testbench with full output
 ```
 
