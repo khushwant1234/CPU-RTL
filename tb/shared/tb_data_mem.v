@@ -1,24 +1,30 @@
 //=============================================================================
-// tb_data_mem.sv  -  unit test for data_mem
+// tb_data_mem.v  -  unit test for data_mem
 // Checks: memory starts at 0, synchronous write, combinational read,
 // write enable gating, word addressing, out-of-range accesses.
 //=============================================================================
 `timescale 1ns/1ps
+`include "tb_check.vh"
+
 module tb_data_mem;
-  `include "tb_check.svh"
   `TB_INIT
 
-  logic        clk = 0, we = 0;
-  logic [31:0] addr = 0, wdata = 0, rdata;
+  reg         clk = 0, we = 0;
+  reg  [31:0] addr = 0, wdata = 0;
+  wire [31:0] rdata;
+  integer     i;
 
-  data_mem #(.DEPTH(64)) dut (.*);
+  data_mem #(.DEPTH(64)) dut (.clk(clk), .we(we), .addr(addr), .wdata(wdata), .rdata(rdata));
 
   always #5 clk = ~clk;
 
-  task automatic store(logic [31:0] a, logic [31:0] d);
-    addr = a; wdata = d; we = 1;
-    @(posedge clk); #1;
-    we = 0;
+  task store;
+    input [31:0] a, d;
+    begin
+      addr = a; wdata = d; we = 1;
+      @(posedge clk); #1;
+      we = 0;
+    end
   endtask
 
   initial begin
@@ -28,10 +34,10 @@ module tb_data_mem;
     #1 `CHECK_EQ(rdata, 32'h0, "memory starts cleared")
 
     // write then read every word
-    for (int i = 0; i < 64; i++) store(i * 4, 32'hD000_0000 + i);
-    for (int i = 0; i < 64; i++) begin
+    for (i = 0; i < 64; i = i + 1) store(i * 4, 32'hD000_0000 + i);
+    for (i = 0; i < 64; i = i + 1) begin
       addr = i * 4;
-      #1 `CHECK_EQ(rdata, 32'hD000_0000 + i, "read back stored word")
+      #1 `CHECK_EQ_I(rdata, 32'hD000_0000 + i, "read back stored word", i)
     end
 
     // write is synchronous: not visible before the edge
