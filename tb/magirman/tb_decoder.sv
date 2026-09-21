@@ -150,12 +150,13 @@ module tb_decoder;
     instr = enc_b(OP_BEQ, 27'd3); #1
     exp = bubble();
     exp.branch = 1;
-    `CHECK_EQ(ctrl, exp, "beq: ctrl")
+    `CHECK_EQ(ctrl, exp, "beq: ctrl (branch_gt clear)")
     `CHECK_EQ(branch_offset, 27'd3, "beq: offset field")
 
     instr = enc_b(OP_BGT, 27'd5); #1
-    `CHECK_EQ(ctrl.branch, 1'b1, "bgt: branch bit")
-    `CHECK_EQ(ctrl.reg_write_en, 1'b0, "bgt: no reg write")
+    exp.branch_gt = 1;
+    `CHECK_EQ(ctrl, exp, "bgt: ctrl (branch_gt set)")
+    `CHECK_EQ(branch_offset, 27'd5, "bgt: offset field")
 
     // ---- ret: implicit read of ra -------------------------------------
     instr = {OP_RET, 27'b0}; #1

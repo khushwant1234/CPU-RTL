@@ -154,6 +154,7 @@ module decoder
       // ---- beq / bgt: conditional branch-format, reads flags not GPRs ---
       OP_BEQ, OP_BGT: begin
         ctrl.branch        = 1'b1;
+        ctrl.branch_gt     = (opcode == OP_BGT);
       end
 
       // ---- ret: implicit read of ra (r15), no operand field --------------

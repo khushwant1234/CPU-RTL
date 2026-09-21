@@ -60,6 +60,7 @@ package simpleriscprocessor_pkg;
     logic       mem_read_en;    // ld
     logic       mem_write_en;   // st
     logic       branch;         // beq/bgt (conditional)
+    logic       branch_gt;      // 1 = bgt (test GT flag), 0 = beq (test E flag)
     logic       jump;           // b/call (unconditional)
     logic       is_call;        // writes ra = PC+4
     logic       is_ret;         // reads ra, jumps to it
