@@ -1,6 +1,6 @@
 # SimpleRISC CPU
 
-RTL (SystemVerilog) for a 5-stage pipelined SimpleRisc processor, with unit
+RTL (plain Verilog-2005) for a 5-stage pipelined SimpleRisc processor, with unit
 tests for every module and an integration test that runs real programs on the
 full CPU.
 
@@ -18,18 +18,18 @@ Hazards handled:
 |---|---|---|
 | Fetch + decode (IF, OF) | Magirman | `rtl/magirman/` pc_reg, instr_mem, if_id_reg, decoder, reg_file, id_ex_reg |
 | Execute, memory, write-back (EX, MA, RW) | Khushwant | `rtl/khushwant/` alu, flags, branch_unit, execute_stage, ex_mem_reg, memory_unit, mem_wb_reg, writeback |
-| Shared | both | `rtl/common/simpleriscprocessor_pkg.sv`, `rtl/shared/` forwarding_unit, hazard_unit, data_mem, simplerisc_cpu (top) |
+| Shared | both | `rtl/common/defines.vh`, `rtl/shared/` forwarding_unit, hazard_unit, data_mem, simplerisc_cpu (top) |
 
 Tests follow the same layout under `tb/magirman`, `tb/khushwant` and `tb/shared`.
 
 ## Layout
 
 ```
-rtl/common/     simpleriscprocessor_pkg.sv   opcodes, ctrl_t, alu_op_e, fwd_sel_e, CTRL_BUBBLE
+rtl/common/     defines.vh    opcodes, ALU ops, ctrl bit positions, CTRL_BUBBLE, FWD_*
 rtl/magirman/   IF + OF stage modules
 rtl/khushwant/  EX + MA + RW stage modules
 rtl/shared/     forwarding_unit, hazard_unit, data_mem, simplerisc_cpu (top level)
-tb/common/      tb_check.svh (CHECK_EQ macros), tb_encode.svh (instruction encoders)
+tb/common/      tb_check.vh (CHECK_EQ macros), tb_encode.vh (instruction encoders)
 tb/*/           one self-checking testbench per module, tb_cpu = full CPU
 programs/       SimpleRisc assembly test programs (+ assembled .hex)
 tools/sr_asm.py small assembler, .s -> .hex for $readmemh
@@ -38,7 +38,8 @@ run_tests.sh    builds + runs every testbench with Icarus Verilog
 
 ## Running the tests
 
-Needs Icarus Verilog 12+ (`brew install icarus-verilog`) and python3.
+Needs Icarus Verilog (`brew install icarus-verilog`) and python3. Everything is
+compiled with `iverilog -g2005`, so any SystemVerilog syntax is rejected.
 
 ```bash
 ./run_tests.sh              # everything
@@ -46,7 +47,7 @@ Needs Icarus Verilog 12+ (`brew install icarus-verilog`) and python3.
 ./run_tests.sh tb_cpu -v    # one testbench with full output
 ```
 
-Current result: **18 testbenches, all pass (~11.8k checks)**.
+Current result: **18 testbenches, all pass (~9.8k checks)**.
 
 Waveform of the full CPU run (open with GTKWave):
 
@@ -72,7 +73,7 @@ python3 tools/sr_asm.py programs/bubble_sort.s -l
 * Branch target = `pc + (sign_ext(offset) << 2)`, so offset counts instructions
 * 16 registers, `r14 = sp`, `r15 = ra`, r0 is a normal register
 
-Opcodes are in `simpleriscprocessor_pkg.sv`: add, sub, mul, div, mod, cmp, and, or,
+Opcodes are in `rtl/common/defines.vh`: add, sub, mul, div, mod, cmp, and, or,
 not, mov, lsl, lsr, asr, nop, ld, st, beq, bgt, b, call, ret.
 
 The decoder normalizes the odd cases so the hazard logic never needs opcode specific checks:
@@ -106,10 +107,34 @@ The decoder normalizes the odd cases so the hazard logic never needs opcode spec
 The stall and flush counts are checked exactly by `tb_cpu`, along with every
 register and memory result.
 
+## Control bundle
+
+The decoder produces a 17-bit `ctrl` vector that travels down the pipeline
+with each instruction. Bit positions are defined in `defines.vh`:
+
+| Bits | Name | Meaning |
+|---|---|---|
+| 0 | `C_REG_WRITE` | writes rd in RW |
+| 1 | `C_MEM_READ` | ld |
+| 2 | `C_MEM_WRITE` | st |
+| 3 | `C_BRANCH` | beq / bgt |
+| 4 | `C_BRANCH_GT` | 1 = bgt, 0 = beq |
+| 5 | `C_JUMP` | b / call |
+| 6 | `C_IS_CALL` | writes ra = pc + 4 |
+| 7 | `C_IS_RET` | jumps to ra |
+| 8 | `C_ALU_SRC_IMM` | I bit, 2nd operand is the immediate |
+| 9 | `C_MEM_TO_REG` | write back the load result |
+| 10 | `C_FLAGS_WRITE` | cmp |
+| 11 | `C_RS1_VALID` | instruction really reads rs1 |
+| 12 | `C_RS2_VALID` | instruction really reads rs2 |
+| 16:13 | `C_ALU_OP` | ALU operation (`ALU_*`) |
+
+`CTRL_BUBBLE` (all zeros, `ALU_OP = ALU_NOP`) is what flushed / reset stages hold.
+
 ## Changes made to the fetch/decode files during integration
 
-* `decoder.sv`: sets the new `ctrl.branch_gt` bit so EX knows beq from bgt; the
-  not/mov ternary became an if/else (Icarus needs a cast otherwise)
-* `id_ex_reg.sv`: reset/flush load the `CTRL_BUBBLE` constant (the old
-  always_comb bubble was X at time 0); flush moved out of the async reset branch
-* `simpleriscprocessor_pkg.sv`: added `branch_gt`, `fwd_sel_e` and `CTRL_BUBBLE`
+* Everything was converted from SystemVerilog to plain Verilog: the package became
+  `defines.vh` and the `ctrl_t` struct became the bit vector above
+* `decoder.v`: sets the new `C_BRANCH_GT` bit so EX can tell beq from bgt
+* `id_ex_reg.v`: reset/flush load the `CTRL_BUBBLE` constant (the old always_comb
+  bubble was X at time 0); flush moved out of the async reset branch
