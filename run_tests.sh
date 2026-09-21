@@ -18,6 +18,12 @@ VERBOSE=0
 BUILD=build
 mkdir -p "$BUILD"
 
+# re-assemble the test programs so edits to programs/*.s are always picked up
+for s in programs/*.s; do
+  python3 tools/sr_asm.py "$s" || { echo "  assembler failed on $s"; exit 1; }
+done
+rm -rf tools/__pycache__
+
 # package first, then all RTL
 RTL=(rtl/common/simpleriscprocessor_pkg.sv $(ls rtl/magirman/*.sv rtl/khushwant/*.sv rtl/shared/*.sv 2>/dev/null))
 
