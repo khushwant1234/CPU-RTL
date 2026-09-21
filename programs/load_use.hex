@@ -1,0 +1,22 @@
+4c400100   // mov  r1, 256
+4c80000b   // mov  r2, 11
+7c840000   // st   r2, 0[r1]
+4c800016   // mov  r2, 22
+7c840004   // st   r2, 4[r1]
+74c40000   // ld   r3, 0[r1]
+010cc000   // add  r4, r3, r3         @ stall 1 -> 22
+75440004   // ld   r5, 4[r1]
+68000000   // nop
+01954000   // add  r6, r5, r5         @ distance 2, no stall -> 44
+75c40000   // ld   r7, 0[r1]
+7dc40008   // st   r7, 8[r1]          @ stall 2: stored value comes from the load
+76040008   // ld   r8, 8[r1]          @ 11, reads back the st right before it
+7c44000c   // st   r1, 12[r1]         @ mem[256+12] = 256 (a pointer)
+7644000c   // ld   r9, 12[r1]         @ r9 = 256
+76a40004   // ld   r10, 4[r9]         @ stall 3: base register from a load -> 22
+76c40000   // ld   r11, 0[r1]
+2c2c000b   // cmp  r11, 11            @ stall 4
+80000002   // beq  ok
+4f000bad   // mov  r12, 0xbad
+4f400001   // ok:     mov  r13, 1
+90000000   // halt:   b    halt

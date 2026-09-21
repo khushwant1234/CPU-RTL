@@ -1,0 +1,46 @@
+4c400100   // mov  r1, 0x100
+4c800005   // mov  r2, 5
+7c840000   // st   r2, 0[r1]
+4c80fffd   // mov  r2, -3
+7c840004   // st   r2, 4[r1]
+4c80000c   // mov  r2, 12
+7c840008   // st   r2, 8[r1]
+4c800000   // mov  r2, 0
+7c84000c   // st   r2, 12[r1]
+4c800007   // mov  r2, 7
+7c840010   // st   r2, 16[r1]
+4c800007   // mov  r2, 7
+7c840014   // st   r2, 20[r1]
+4c80ffec   // mov  r2, -20
+7c840018   // st   r2, 24[r1]
+4c800001   // mov  r2, 1
+7c84001c   // st   r2, 28[r1]
+4cc00008   // mov  r3, 8              @ n
+0ccc0001   // outer:  sub  r3, r3, 1
+2c0c0000   // cmp  r3, 0
+8000000f   // beq  sorted
+4d000000   // mov  r4, 0              @ i
+49404000   // mov  r5, r1             @ &a[i]
+2810c000   // inner:  cmp  r4, r3
+87fffffa   // beq  outer
+75940000   // ld   r6, 0[r5]
+75d40004   // ld   r7, 4[r5]
+2819c000   // cmp  r6, r7             @ load-use on r7
+88000002   // bgt  swap
+90000003   // b    next
+7dd40000   // swap:   st   r7, 0[r5]
+7d940004   // st   r6, 4[r5]
+05100001   // next:   add  r4, r4, 1
+05540004   // add  r5, r5, 4
+97fffff5   // b    inner
+4e000000   // sorted: mov  r8, 0
+4d000000   // mov  r4, 0
+49404000   // mov  r5, r1
+75940000   // sum:    ld   r6, 0[r5]
+02218000   // add  r8, r8, r6         @ load-use on r6
+05540004   // add  r5, r5, 4
+05100001   // add  r4, r4, 1
+2c100008   // cmp  r4, 8
+80000002   // beq  end
+97fffffa   // b    sum
+90000000   // end:    b    end

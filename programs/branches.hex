@@ -1,0 +1,33 @@
+4c400005   // mov  r1, 5
+4c800005   // mov  r2, 5
+4cc00000   // mov  r3, 0
+28048000   // cmp  r1, r2
+80000003   // beq  eq_ok              @ taken
+4cc00063   // mov  r3, 99             @ flushed
+4cc00062   // mov  r3, 98             @ flushed
+04cc0001   // eq_ok:  add  r3, r3, 1          @ r3 = 1
+2c040003   // cmp  r1, 3
+88000002   // bgt  gt_ok              @ taken, 5 > 3
+4d000063   // mov  r4, 99             @ flushed
+4d000002   // gt_ok:  mov  r4, 2
+2c040009   // cmp  r1, 9
+88000012   // bgt  bad                @ not taken
+80000011   // beq  bad                @ not taken
+4d400003   // mov  r5, 3
+4d80ffff   // mov  r6, -1
+28184000   // cmp  r6, r1             @ -1 > 5 ? no (signed)
+8800000d   // bgt  bad
+90000002   // b    skip
+4dc00063   // mov  r7, 99             @ flushed
+4dc00004   // skip:   mov  r7, 4
+4e000000   // mov  r8, 0
+4e400001   // mov  r9, 1
+02224000   // loop:   add  r8, r8, r9
+06640001   // add  r9, r9, 1
+2c24000b   // cmp  r9, 11
+80000002   // beq  done
+97fffffc   // b    loop
+4e800077   // done:   mov  r10, 0x77
+90000000   // halt:   b    halt
+4ec00bad   // bad:    mov  r11, 0xbad
+97ffffff   // b    bad

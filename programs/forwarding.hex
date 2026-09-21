@@ -1,0 +1,22 @@
+4c400001   // mov  r1, 1
+00844000   // add  r2, r1, r1         @ 2    r1 from EX/MEM on both operands
+00c84000   // add  r3, r2, r1         @ 3    r2 EX/MEM, r1 MEM/WB
+010c8000   // add  r4, r3, r2         @ 5
+0150c000   // add  r5, r4, r3         @ 8
+01950000   // add  r6, r5, r4         @ 13
+01d94000   // add  r7, r6, r5         @ 21
+68000000   // nop
+021d8000   // add  r8, r7, r6         @ 34   r7 MEM/WB, r6 through the reg file bypass
+68000000   // nop
+68000000   // nop
+0261c000   // add  r9, r8, r7         @ 55   distance 3 and 4
+4e800007   // mov  r10, 7
+4e800009   // mov  r10, 9             @ two writes to r10 in flight
+02ea8000   // add  r11, r10, r10      @ 18   newest value must win
+4f400040   // mov  r13, 64
+4f000064   // mov  r12, 100
+7f340004   // st   r12, 4[r13]        @ store data forwarded (dist 1), base (dist 2)
+74340004   // ld   r0, 4[r13]         @ r0 = 100, reads what the st just wrote
+68000000   // nop
+43800000   // not  r14, r0            @ ~100, load at distance 2 -> forwarded, no stall
+90000000   // halt:   b    halt
