@@ -1,28 +1,35 @@
 //=============================================================================
-// tb_flags.sv  -  unit test for flags
+// tb_flags.v  -  unit test for flags
 // Checks: reset, E and GT set on write, signed compare, hold when
 // write_en = 0, update is on the clock edge only.
 //=============================================================================
 `timescale 1ns/1ps
+`include "tb_check.vh"
+
 module tb_flags;
-  `include "tb_check.svh"
   `TB_INIT
 
-  logic        rst_n;
-  logic        clk = 0, write_en = 0;
-  logic [31:0] a = 0, b = 0;
-  logic        flag_e, flag_gt;
+  reg         clk = 0;
+  reg         rst_n;
+  reg         write_en = 0;
+  reg  [31:0] a = 0, b = 0;
+  wire        flag_e, flag_gt;
 
-  flags dut (.*);
+  flags dut (.clk(clk), .rst_n(rst_n), .write_en(write_en), .a(a), .b(b),
+             .flag_e(flag_e), .flag_gt(flag_gt));
 
   always #5 clk = ~clk;
 
-  task automatic cmp(logic [31:0] x, logic [31:0] y, logic exp_e, logic exp_gt, string what);
-    a = x; b = y; write_en = 1;
-    @(posedge clk); #1;
-    write_en = 0;
-    `CHECK_EQ(flag_e,  exp_e,  {what, ": E"})
-    `CHECK_EQ(flag_gt, exp_gt, {what, ": GT"})
+  task cmp;
+    input [31:0]     x, y;
+    input            exp_e, exp_gt;
+    input [8*32-1:0] what;
+    begin
+      a = x; b = y; write_en = 1;
+      @(posedge clk); #1;
+      write_en = 0;
+      `CHECK_EQ({flag_e, flag_gt}, {exp_e, exp_gt}, what)
+    end
   endtask
 
   initial begin
@@ -45,7 +52,6 @@ module tb_flags;
     #1 `CHECK_EQ({flag_e, flag_gt}, 2'b10, "flags hold without write_en")
 
     // update only happens on the edge
-    a = 32'd3; b = 32'd3; write_en = 1;
     cmp(32'd50, 32'd10, 0, 1, "set GT");
     a = 32'd4; b = 32'd4; write_en = 1;
     #2 `CHECK_EQ({flag_e, flag_gt}, 2'b01, "no change before the clock edge")

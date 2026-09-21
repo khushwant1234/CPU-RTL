@@ -1,30 +1,38 @@
 //=============================================================================
-// tb_branch_unit.sv  -  unit test for branch_unit
+// tb_branch_unit.v  -  unit test for branch_unit
 // Exhaustive over all control/flag combinations, plus target selection.
 //=============================================================================
 `timescale 1ns/1ps
+`include "tb_check.vh"
+
 module tb_branch_unit;
-  `include "tb_check.svh"
   `TB_INIT
 
-  logic        jump, branch, branch_gt, is_ret, flag_e, flag_gt;
-  logic [31:0] branch_target = 32'h0000_1000, ret_addr = 32'h0000_2000;
-  logic        branch_taken;
-  logic [31:0] branch_pc;
+  reg         jump, branch, branch_gt, is_ret, flag_e, flag_gt;
+  reg  [31:0] branch_target = 32'h0000_1000, ret_addr = 32'h0000_2000;
+  wire        branch_taken;
+  wire [31:0] branch_pc;
 
-  branch_unit dut (.*);
+  branch_unit dut (
+    .jump(jump), .branch(branch), .branch_gt(branch_gt), .is_ret(is_ret),
+    .flag_e(flag_e), .flag_gt(flag_gt), .branch_target(branch_target),
+    .ret_addr(ret_addr), .branch_taken(branch_taken), .branch_pc(branch_pc)
+  );
+
+  integer v;
+  reg     exp_taken;
 
   initial begin
     $display("tb_branch_unit");
 
     // all 64 input combinations against the expected equation
-    for (int v = 0; v < 64; v++) begin
-      logic exp_taken;
+    // (index = {jump, branch, branch_gt, is_ret, flag_e, flag_gt})
+    for (v = 0; v < 64; v = v + 1) begin
       {jump, branch, branch_gt, is_ret, flag_e, flag_gt} = v[5:0];
       exp_taken = jump | is_ret | (branch & (branch_gt ? flag_gt : flag_e));
       #1
-      `CHECK_EQ(branch_taken, exp_taken, $sformatf("taken for inputs %06b", v[5:0]))
-      `CHECK_EQ(branch_pc, is_ret ? ret_addr : branch_target, $sformatf("target for inputs %06b", v[5:0]))
+      `CHECK_EQ_I(branch_taken, exp_taken, "taken for input combo", v)
+      `CHECK_EQ_I(branch_pc, is_ret ? ret_addr : branch_target, "target for input combo", v)
     end
 
     // readable directed cases
