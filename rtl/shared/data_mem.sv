@@ -37,7 +37,7 @@ module data_mem #(
   assign rdata = in_range ? mem[word] : 32'b0;
 
   // synthesis translate_off
-  always_ff @(posedge clk) begin
+  always @(posedge clk) begin
     if (we && !in_range)
       $warning("data_mem: store to 0x%08h out of range (DEPTH=%0d words)", addr, DEPTH);
   end
