@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
 # Compiles and runs every testbench under tb/ with Icarus Verilog and
-# prints a pass/fail summary.
+# prints a pass/fail summary. Compiled with -g2005, so everything has to be
+# plain Verilog (no SystemVerilog).
 #
 #   ./run_tests.sh              run everything
 #   ./run_tests.sh magirman     only testbenches whose path contains "magirman"
@@ -24,18 +25,18 @@ for s in programs/*.s; do
 done
 rm -rf tools/__pycache__
 
-# package first, then all RTL
-RTL=(rtl/common/simpleriscprocessor_pkg.sv $(ls rtl/magirman/*.sv rtl/khushwant/*.sv rtl/shared/*.sv 2>/dev/null))
+# all RTL (plain Verilog, shared defines come from rtl/common/defines.vh)
+RTL=($(ls rtl/magirman/*.v rtl/khushwant/*.v rtl/shared/*.v 2>/dev/null))
 
 pass=0; fail=0; failed=()
 
-for tb in $(ls tb/magirman/tb_*.sv tb/khushwant/tb_*.sv tb/shared/tb_*.sv 2>/dev/null); do
+for tb in $(ls tb/magirman/tb_*.v tb/khushwant/tb_*.v tb/shared/tb_*.v 2>/dev/null); do
   [[ -n "$FILTER" && "$tb" != *"$FILTER"* ]] && continue
-  top=$(basename "$tb" .sv)
+  top=$(basename "$tb" .v)
   out="$BUILD/$top.vvp"
   log="$BUILD/$top.log"
 
-  if ! iverilog -g2012 -Wall -Wno-timescale -I tb/common -s "$top" -o "$out" "${RTL[@]}" "$tb" > "$log" 2>&1; then
+  if ! iverilog -g2005 -Wall -Wno-timescale -I rtl/common -I tb/common -s "$top" -o "$out" "${RTL[@]}" "$tb" > "$log" 2>&1; then
     printf "  %-28s COMPILE ERROR\n" "$top"
     cat "$log"
     fail=$((fail+1)); failed+=("$top"); continue
