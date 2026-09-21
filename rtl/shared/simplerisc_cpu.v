@@ -1,5 +1,5 @@
 //=============================================================================
-// simplerisc_cpu.sv
+// simplerisc_cpu.v
 // Top level of the 5-stage pipelined SimpleRisc processor.
 //
 //   IF  : pc_reg, instr_mem                          (Magirman)
@@ -14,35 +14,35 @@
 // tests end the program with "b ." (branch to itself) and the testbench
 // watches for that.
 //=============================================================================
-module simplerisc_cpu
-  import simpleriscprocessor_pkg::*;
-#(
-  parameter int IMEM_DEPTH = 1024,   // words
-  parameter int DMEM_DEPTH = 1024    // words
+`include "defines.vh"
+
+module simplerisc_cpu #(
+  parameter IMEM_DEPTH = 1024,   // words
+  parameter DMEM_DEPTH = 1024    // words
 )(
-  input  logic        clk,
-  input  logic        rst_n,
+  input  wire        clk,
+  input  wire        rst_n,
 
   // debug / observation ports (used by the testbench, handy in waveforms)
-  output logic [31:0] dbg_pc,          // pc in IF
-  output logic        dbg_wb_en,
-  output logic [3:0]  dbg_wb_addr,
-  output logic [31:0] dbg_wb_data,
-  output logic        dbg_stall,       // load-use stall this cycle
-  output logic        dbg_flush        // taken branch this cycle
+  output wire [31:0] dbg_pc,          // pc in IF
+  output wire        dbg_wb_en,
+  output wire [3:0]  dbg_wb_addr,
+  output wire [31:0] dbg_wb_data,
+  output wire        dbg_stall,       // load-use stall this cycle
+  output wire        dbg_flush        // taken branch this cycle
 );
 
   // =====================================================================
   // Hazard control
   // =====================================================================
-  logic pc_stall, if_id_stall, if_id_flush, id_ex_flush, load_use;
+  wire        pc_stall, if_id_stall, if_id_flush, id_ex_flush, load_use;
 
   // =====================================================================
   // IF
   // =====================================================================
-  logic [31:0] if_pc, if_instr, pc_next;
-  logic        ex_branch_taken;
-  logic [31:0] ex_branch_pc;
+  wire [31:0] if_pc, if_instr, pc_next;
+  wire        ex_branch_taken;
+  wire [31:0] ex_branch_pc;
 
   assign pc_next = ex_branch_taken ? ex_branch_pc : (if_pc + 32'd4);
 
@@ -59,7 +59,7 @@ module simplerisc_cpu
     .instr_out (if_instr)
   );
 
-  logic [31:0] id_pc, id_instr;
+  wire [31:0] id_pc, id_instr;
 
   if_id_reg u_if_id (
     .clk       (clk),
@@ -75,15 +75,15 @@ module simplerisc_cpu
   // =====================================================================
   // OF (decode + register read)
   // =====================================================================
-  logic [3:0]  id_rd_addr, id_rs1_addr, id_rs2_addr;
-  logic [31:0] id_imm_ext, id_rs1_data, id_rs2_data;
-  logic [26:0] id_branch_offset;
-  ctrl_t       id_ctrl;
+  wire [3:0]  id_rd_addr, id_rs1_addr, id_rs2_addr;
+  wire [31:0] id_imm_ext, id_rs1_data, id_rs2_data;
+  wire [26:0] id_branch_offset;
+  wire [`CTRL_W-1:0] id_ctrl;
 
   // write-back port (driven in RW)
-  logic        wb_en;
-  logic [3:0]  wb_addr;
-  logic [31:0] wb_data;
+  wire        wb_en;
+  wire [3:0]  wb_addr;
+  wire [31:0] wb_data;
 
   decoder u_decoder (
     .instr         (id_instr),
@@ -107,10 +107,10 @@ module simplerisc_cpu
     .rs2_data    (id_rs2_data)
   );
 
-  logic [31:0] ex_pc, ex_rs1_data, ex_rs2_data, ex_imm_ext;
-  logic [26:0] ex_branch_offset;
-  logic [3:0]  ex_rd_addr, ex_rs1_addr, ex_rs2_addr;
-  ctrl_t       ex_ctrl;
+  wire [31:0] ex_pc, ex_rs1_data, ex_rs2_data, ex_imm_ext;
+  wire [26:0] ex_branch_offset;
+  wire [3:0]  ex_rd_addr, ex_rs1_addr, ex_rs2_addr;
+  wire [`CTRL_W-1:0] ex_ctrl;
 
   // ID/EX never has to hold: on a load-use stall the instruction stays in
   // IF/ID and a bubble goes into ID/EX instead.
@@ -142,28 +142,28 @@ module simplerisc_cpu
   // =====================================================================
   // EX
   // =====================================================================
-  logic [31:0] mem_pc, mem_alu_result, mem_op2;
-  logic [3:0]  mem_rd_addr;
-  ctrl_t       mem_ctrl;
-  logic [31:0] mem_fwd_data;
+  wire [31:0] mem_pc, mem_alu_result, mem_op2;
+  wire [3:0]  mem_rd_addr;
+  wire [`CTRL_W-1:0] mem_ctrl;
+  wire [31:0] mem_fwd_data;
 
   // value the instruction in MEM will write back (call writes pc+4, not the
   // ALU output). Loads are never forwarded from here (see forwarding_unit).
-  assign mem_fwd_data = mem_ctrl.is_call ? (mem_pc + 32'd4) : mem_alu_result;
+  assign mem_fwd_data = mem_ctrl[`C_IS_CALL] ? (mem_pc + 32'd4) : mem_alu_result;
 
-  logic [31:0] ex_op1, ex_op2;
-  fwd_sel_e    fwd_a_sel, fwd_b_sel;
+  wire [31:0] ex_op1, ex_op2;
+  wire [1:0]   fwd_a_sel, fwd_b_sel;
 
   forwarding_unit u_fwd (
     .ex_rs1_addr      (ex_rs1_addr),
     .ex_rs2_addr      (ex_rs2_addr),
-    .ex_rs1_valid     (ex_ctrl.rs1_valid),
-    .ex_rs2_valid     (ex_ctrl.rs2_valid),
+    .ex_rs1_valid     (ex_ctrl[`C_RS1_VALID]),
+    .ex_rs2_valid     (ex_ctrl[`C_RS2_VALID]),
     .ex_rs1_data      (ex_rs1_data),
     .ex_rs2_data      (ex_rs2_data),
     .mem_rd_addr      (mem_rd_addr),
-    .mem_reg_write_en (mem_ctrl.reg_write_en),
-    .mem_is_load      (mem_ctrl.mem_read_en),
+    .mem_reg_write_en (mem_ctrl[`C_REG_WRITE]),
+    .mem_is_load      (mem_ctrl[`C_MEM_READ]),
     .mem_fwd_data     (mem_fwd_data),
     .wb_rd_addr       (wb_addr),
     .wb_reg_write_en  (wb_en),
@@ -174,8 +174,8 @@ module simplerisc_cpu
     .op2              (ex_op2)
   );
 
-  logic [31:0] ex_alu_result;
-  logic        flag_e, flag_gt;
+  wire [31:0] ex_alu_result;
+  wire        flag_e, flag_gt;
 
   execute_stage u_ex (
     .clk           (clk),
@@ -196,9 +196,9 @@ module simplerisc_cpu
   hazard_unit u_hazard (
     .id_rs1_addr    (id_rs1_addr),
     .id_rs2_addr    (id_rs2_addr),
-    .id_rs1_valid   (id_ctrl.rs1_valid),
-    .id_rs2_valid   (id_ctrl.rs2_valid),
-    .ex_mem_read_en (ex_ctrl.mem_read_en),
+    .id_rs1_valid   (id_ctrl[`C_RS1_VALID]),
+    .id_rs2_valid   (id_ctrl[`C_RS2_VALID]),
+    .ex_mem_read_en (ex_ctrl[`C_MEM_READ]),
     .ex_rd_addr     (ex_rd_addr),
     .branch_taken   (ex_branch_taken),
     .load_use       (load_use),
@@ -226,8 +226,8 @@ module simplerisc_cpu
   // =====================================================================
   // MA
   // =====================================================================
-  logic [31:0] dmem_addr, dmem_wdata, dmem_rdata, mem_ld_result;
-  logic        dmem_we, dmem_re;
+  wire [31:0] dmem_addr, dmem_wdata, dmem_rdata, mem_ld_result;
+  wire        dmem_we, dmem_re;
 
   memory_unit u_mem_unit (
     .ctrl       (mem_ctrl),
@@ -249,9 +249,9 @@ module simplerisc_cpu
     .rdata (dmem_rdata)
   );
 
-  logic [31:0] wb_pc, wb_alu_result, wb_ld_result;
-  logic [3:0]  wb_rd_addr;
-  ctrl_t       wb_ctrl;
+  wire [31:0] wb_pc, wb_alu_result, wb_ld_result;
+  wire [3:0]  wb_rd_addr;
+  wire [`CTRL_W-1:0] wb_ctrl;
 
   mem_wb_reg u_mem_wb (
     .clk            (clk),
@@ -292,4 +292,4 @@ module simplerisc_cpu
   assign dbg_stall   = load_use;
   assign dbg_flush   = ex_branch_taken;
 
-endmodule : simplerisc_cpu
+endmodule

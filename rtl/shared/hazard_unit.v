@@ -1,5 +1,5 @@
 //=============================================================================
-// hazard_unit.sv
+// hazard_unit.v
 // Stall / flush control for the 5-stage pipeline.
 //
 // 1) Load-use hazard (data):
@@ -21,23 +21,23 @@
 //=============================================================================
 module hazard_unit (
   // instruction in ID (decoder outputs)
-  input  logic [3:0] id_rs1_addr,
-  input  logic [3:0] id_rs2_addr,
-  input  logic       id_rs1_valid,
-  input  logic       id_rs2_valid,
+  input  wire [3:0] id_rs1_addr,
+  input  wire [3:0] id_rs2_addr,
+  input  wire       id_rs1_valid,
+  input  wire       id_rs2_valid,
 
   // instruction in EX (ID/EX)
-  input  logic       ex_mem_read_en,
-  input  logic [3:0] ex_rd_addr,
+  input  wire       ex_mem_read_en,
+  input  wire [3:0] ex_rd_addr,
 
   // branch resolution in EX
-  input  logic       branch_taken,
+  input  wire       branch_taken,
 
-  output logic       load_use,      // exported for debug / perf counting
-  output logic       pc_stall,
-  output logic       if_id_stall,
-  output logic       if_id_flush,
-  output logic       id_ex_flush
+  output wire       load_use,      // exported for debug / perf counting
+  output wire       pc_stall,
+  output wire       if_id_stall,
+  output wire       if_id_flush,
+  output wire       id_ex_flush
 );
 
   assign load_use = ex_mem_read_en &&
@@ -49,4 +49,4 @@ module hazard_unit (
   assign if_id_flush = branch_taken;
   assign id_ex_flush = branch_taken || load_use;
 
-endmodule : hazard_unit
+endmodule

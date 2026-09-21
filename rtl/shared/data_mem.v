@@ -1,5 +1,5 @@
 //=============================================================================
-// data_mem.sv
+// data_mem.v
 // Behavioral data memory for simulation, used by memory_unit in the MA stage.
 //   - word addressed internally (addr[31:2]), ld/st are 32-bit words
 //   - write: synchronous, on the rising edge when we = 1
@@ -9,27 +9,25 @@
 // warning in simulation) so a bad address never corrupts other words.
 //=============================================================================
 module data_mem #(
-  parameter int DEPTH = 1024   // words
+  parameter DEPTH = 1024   // words
 )(
-  input  logic        clk,
-  input  logic        we,
-  input  logic [31:0] addr,
-  input  logic [31:0] wdata,
-  output logic [31:0] rdata
+  input  wire        clk,
+  input  wire        we,
+  input  wire [31:0] addr,
+  input  wire [31:0] wdata,
+  output wire [31:0] rdata
 );
 
-  logic [31:0] mem [0:DEPTH-1];
-  logic [29:0] word;
-  logic        in_range;
-
-  assign word     = addr[31:2];
-  assign in_range = (word < DEPTH);
+  reg  [31:0] mem [0:DEPTH-1];
+  wire [29:0] word     = addr[31:2];
+  wire        in_range = (word < DEPTH);
+  integer i;
 
   initial begin
-    for (int i = 0; i < DEPTH; i++) mem[i] = 32'b0;
+    for (i = 0; i < DEPTH; i = i + 1) mem[i] = 32'b0;
   end
 
-  always_ff @(posedge clk) begin
+  always @(posedge clk) begin
     if (we && in_range)
       mem[word] <= wdata;
   end
@@ -39,8 +37,8 @@ module data_mem #(
   // synthesis translate_off
   always @(posedge clk) begin
     if (we && !in_range)
-      $warning("data_mem: store to 0x%08h out of range (DEPTH=%0d words)", addr, DEPTH);
+      $display("WARNING data_mem: store to 0x%08h out of range (DEPTH=%0d words)", addr, DEPTH);
   end
   // synthesis translate_on
 
-endmodule : data_mem
+endmodule
