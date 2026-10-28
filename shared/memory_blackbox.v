@@ -1,4 +1,4 @@
-module data_mem #(parameter DEPTH = 1024) (
+module memory_blackbox #(parameter DEPTH = 1024) (
     input clk,
     input we,
     input [31:0] addr,
@@ -23,7 +23,7 @@ always @(posedge clk) begin
     if (we && valid)
         mem[index] <= wdata;
     if (we && !valid)
-        $display("WARNING data_mem: store to 0x%08h out of range (DEPTH=%0d words)", addr, DEPTH);
+        $display("WARNING memory_blackbox: store to 0x%08h out of range", addr, DEPTH);
 end
 
 assign rdata = valid ? mem[index] : 32'd0;

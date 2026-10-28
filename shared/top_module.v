@@ -1,6 +1,6 @@
 `include "defines.vh"
 
-module simplerisc_cpu #(parameter IMEM_DEPTH = 1024, parameter DMEM_DEPTH = 1024) (
+module top_module #(parameter IMEM_DEPTH = 1024, parameter DMEM_DEPTH = 1024) (
     input clk,
     input rst_n,
     output [31:0] dbg_pc,
@@ -196,7 +196,7 @@ memory_unit u_mem_unit(
     .ld_result(mem_ld_result)
 );
 
-data_mem #(.DEPTH(DMEM_DEPTH)) u_dmem(
+memory_blackbox #(.DEPTH(DMEM_DEPTH)) u_dmem(
     .clk(clk),
     .we(dmem_we),
     .addr(dmem_addr),
