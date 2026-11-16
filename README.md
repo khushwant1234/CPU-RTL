@@ -654,6 +654,18 @@ tb_branch_unit: 137 checks, 137 passed, 0 failed TB_RESULT: PASS
 tb_reg_file: 73 checks, 73 passed, 0 failed TB_RESULT: PASS
 ```
 
+### Run the integration tests
+
+The integration suite runs 880 test programs on the full CPU: every ALU operation with edge values, immediates, every register, memory edge cases, forwarding at every distance, load-use stalls, branches, calls, hazards mixed together, reset in the middle of a run, 23 hand-written programs and 120 random ones.
+
+```bash
+python3 tests/integration/run_tests.py
+```
+
+Each test checks all 16 registers, every memory word, the order and value of every register write and store, and the exact number of stalls, flushes and cycles (cycles = instructions + stalls + 2 × flushes + 2). Expected values come from `tests/integration/refmodel.py`, except in the hand-written programs, whose answers are written in the `.s` files and checked against the model.
+
+Everything lands in `build/integration/`: one log per test (`logs/<group>/<test>.log`) that explains the test in plain English, shows the program and what the CPU did cycle by cycle, and says what went wrong and where to look if it fails; plus `summary.log`, `results.csv` and `history.log`, which keeps one line per run. Options: `--seed N` changes the random tests, `--only TEXT` runs a subset, and `--show N` prints the first N failure logs.
+
 ### Build the full CPU
 
 ```bash
